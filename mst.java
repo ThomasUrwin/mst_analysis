@@ -6,6 +6,11 @@ import java.util.List;
 public class mst {
 
 	public static void main(String[] args) {
+		System.out.println("Running test...");
+		test();
+	}
+	
+	private static void test() {
 		Vertice v1 = new Vertice(1);
 		Vertice v2 = new Vertice(2);
 		System.out.println("V1 id: " + v1.id);
