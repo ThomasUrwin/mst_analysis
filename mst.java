@@ -1,5 +1,8 @@
 package comp3600_ass_2;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class mst {
 
 	public static void main(String[] args) {
@@ -34,5 +37,31 @@ class Edge {
 		weight = w;
 		src = s;
 		dest = d;
+	}
+}
+
+class Graph {
+	List<Vertice> v;
+	List<Edge> e;
+	
+	public Graph() {
+		v = new ArrayList<Vertice>();
+		e = new ArrayList<Edge>();
+	}
+	
+	public void addV(Vertice vert) {
+		v.add(vert);
+	}
+	
+	public void removeV(int id) {
+		
+	}
+	
+	public void addE(Edge edge) {
+		e.add(edge);
+	}
+	
+	public void removeE(Edge edge) {
+		
 	}
 }
