@@ -1,16 +1,12 @@
 package comp3600_ass_2;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
 public class mst {
 	public static void main(String[] args) {
 		runMSTTest(10);
 		runMSTTest(100);
 		runMSTTest(500);
 		runMSTTest(1000);
+		runMSTTest(10000);
 	}
 	
 	private static void runMSTTest(int n) {
@@ -32,33 +28,21 @@ public class mst {
 			//run Kruskal's and Prim's algorithms on the graph, returning average weight L(n) and time to complete
 			startTime = System.currentTimeMillis();
 			krusAveL += kruskal(graphs[i]);
-			
-			/*if(n == 1000) {
-				System.out.println("KrusAveSum: "+krusAveL);
-			}*/
-			
 			endTime = System.currentTimeMillis();
-			
 			krusAveTime += (endTime - startTime);
 			
+			
 			startTime = System.currentTimeMillis();
-			//primAveL += prim(graphs[i]);
-			
-			/*if(n == 1000) {
-				System.out.println("PrimAveSum: "+primAveL);
-			}*/
-			
+			primAveL += prim(graphs[i]);
 			endTime = System.currentTimeMillis();
-			
 			primAveTime += (endTime - startTime);
-//			primL += primVals[1];
 		}
 		
 		//Calculate averages
 		krusAveTime = krusAveTime / 20;
 		krusAveL = krusAveL / 20;
-		//primAveTime = primAveTime / 20;
-		//primAveL = primAveL / 20;
+		primAveTime = primAveTime / 20;
+		primAveL = primAveL / 20;
 		
 		System.out.println("n = " + String.valueOf(n) + " --> Kruskal Ave Time: " + krusAveTime + ", Kruskal Ave L(n): " + krusAveL + "   |||   Prim Ave Time: " + primAveTime + ", Prim Ave L(n): " + primAveL);
 	}
@@ -118,140 +102,31 @@ public class mst {
 		edges = quickSort(edges, 0, numEdges-1);
 		
 		//run Kruskal's
+		//For each edge in the sorted list, check if it can be added
 		for(int i = 0; i < numEdges; i++) {
 			DisjointSet treeSrc = null;
 			DisjointSet treeDest = null;
 			
-			/*for(DisjointSet t : forest) {
-				if(t.value == edges[i].src) {
-					treeSrc = findSet(t);
-				}
-				if(t.value == edges[i].dest) {
-					treeDest = findSet(t);
-				}
-				
-				if((treeSrc != null) && (treeDest != null)) {
-					if(treeSrc != treeDest) {
-						//add edge to MST
-						mst[edges[i].src][edges[i].dest] = edges[i].weight;
-						mst[edges[i].dest][edges[i].src] = edges[i].weight;
-						
-						krusAveL += edges[i].weight;
-						
-						//union sets
-						union(treeSrc, treeDest);
-						//forest.remove(treeDest);
-						break;
-					}else break;
-				}
-			}*/
+			//retrieve representatives of each Disjoint Set
 			treeSrc = findSet(forest[edges[i].src]);
 			treeDest = findSet(forest[edges[i].dest]);
 			
-			if((treeSrc != null) && (treeDest != null)) {
-				if(treeSrc != treeDest) {
-					//add edge to MST
-					mst[edges[i].src][edges[i].dest] = edges[i].weight;
-					mst[edges[i].dest][edges[i].src] = edges[i].weight;
+			if(treeSrc != treeDest) {
+				//add edge to MST
+				mst[edges[i].src][edges[i].dest] = edges[i].weight;
+				mst[edges[i].dest][edges[i].src] = edges[i].weight;
 					
-					krusAveL += edges[i].weight;
+				krusAveL += edges[i].weight;
 					
-					/*if(n == 1000) {
-						System.out.println("Edge weight "+ i + ": " + edges[i].weight);
-					}*/
-					
-					//union sets
-					union(treeSrc, treeDest);
-					//forest.remove(treeDest);
-				}
+				//union sets
+				union(treeSrc, treeDest);
 			}
 		}
-		//long endTime = System.currentTimeMillis();
-
-		//krusAveL = krusAveL / (n-1); //n-1 == number of edges in MST
-
 		return krusAveL;
 	}
 	
 	
-//	//PRIM'S ALGORITHM
-//	private static double prim(double[][] g) {
-//		int n = g[0].length;
-//		double[][] mst = new double[n][n];
-//		//DisjointSet tree = null;
-//		int[] tree = new int[n];
-//		int numEdges = (int) ((Math.pow(n,2)) - n)/2;
-//		Edge[] edges = new Edge[numEdges];
-//		PriorityQueue q = new PriorityQueue(numEdges);
-//		double time = 0;
-//		double primSumL = 0;
-//		
-//		//create array of edges
-//		/*int nextEdge = 0;
-//		for (int i = 0; i < n; i++) {
-//			for (int j = 0; j < i; j++) {
-//				edges[nextEdge] = new Edge(g[i][j], i, j);
-//				nextEdge++;
-//			}
-//		}*/
-//		
-//		//select random vertice to start at
-//		int randVertice = (int) (Math.random() * (n-1));
-//		//tree = new DisjointSet(randVertice);
-//		tree[randVertice]++; //mark this node as added to our MST
-//		//initialise priority queue with edges connected to the randomly selected starting vertice
-//		/*for(int i = 0; i < numEdges; i++) {
-//			if((randVertice == edges[i].src) || (randVertice == edges[i].dest)) {
-//				q.insert(edges[i]);
-//			}
-//		}*/
-//		for(int j = 0; j < n; j++) {
-//			if(tree[j] == 0) {
-//				Edge connectedEdge = new Edge(g[randVertice][j], randVertice, j);
-//				q.insert(connectedEdge);
-//			}
-//		}
-//		
-//		while(!q.isEmpty()) {
-//			Edge e = q.extractMin();
-//			int vertice = -1;
-//			if((tree[e.src] == 1) && !(tree[e.dest] == 1)) {
-//				vertice = e.dest;
-//			}else if((tree[e.dest] == 1) && !(tree[e.src] == 1)){
-//				vertice = e.src;
-//			}
-//			if(vertice != -1) {
-//				primSumL += e.weight;
-//				
-//				if(n == 1000) {
-//					System.out.println("Prim edge: "+e.weight);
-//				}
-//				
-//				tree[vertice]++; //mark this vertice as added to our MST
-//				/*for(int i = 0; i < numEdges; i++) {
-//					if((vertice == edges[i].src) && !(tree.has(edges[i].dest))) {
-//						q.insert(edges[i]);
-//					}else if((vertice == edges[i].dest) && !(tree.has(edges[i].src))) {
-//						q.insert(edges[i]);
-//					}
-//				}*/
-//				for(int j = 0; j < n; j++) {
-//					if(tree[j] == 0) {
-//						Edge connectedEdge = new Edge(g[randVertice][j], randVertice, j);
-//						q.insert(connectedEdge);
-//					}
-//				}
-//			}
-//		}
-//		
-//		//primAveL = primAveL / (n-1); //n-1 == number of edges in MST
-//		/*System.out.print("Nodes in Prim MST: ");
-//		for(int i = 0; i < n; i++) {
-//			System.out.print(tree[i]+", ");
-//		}*/
-//		return primSumL;
-//	}
-	
+	//PRIM'S ALGORITHM	
 	private static double prim(double[][] g) {
 		int n = g[0].length;
 		double[][] mst = new double[n][n];
@@ -265,11 +140,8 @@ public class mst {
 		}
 		
 		int randVertice = (int) (Math.random() * (n-1));
-		System.out.println("Rand: "+randVertice);
 		//q.queue[randVertice+1].key = 0;
-		System.out.println("Vert: "+randVertice+", pos: "+q.get(randVertice)+" key: "+q.queue[q.get(randVertice)].key);
 		q.decreaseKey(q.get(randVertice), 0);
-		System.out.println("Vert: "+randVertice+", pos: "+q.get(randVertice)+" key: "+q.queue[q.get(randVertice)].key);
 		while(!q.isEmpty()) {
 			PQVert v = q.extractMin();
 			tree[v.id] = 1;
@@ -290,6 +162,7 @@ public class mst {
 		return primSumL;
 	}
 	
+	//standard quicksort algorithm
 	private static Edge[] quickSort(Edge[] edges, int low, int high) {
 		int i = low;
 		int j = high;
@@ -378,7 +251,6 @@ class PriorityQueue {
 				return i;
 			}
 		}
-		System.out.println("Can't find "+v);
 		return -1;
 	}
 	
@@ -391,19 +263,13 @@ class PriorityQueue {
 	
 	//extracts node with the minimum key in the queue (in index 1)
 	public PQVert extractMin() {
-		System.out.println("Extracted "+queue[1].id);
 		PQVert v = queue[1];
 		queue[1] = queue[size];
 		
 		queue[size] = null;
 		
 		fixQueueExtract();
-		//size--;
-		System.out.print("Queue after fix: ");
-		for(int i = 1; i < size; i++) {
-			System.out.print(queue[i].id+", ");
-		}
-		System.out.println("");
+		size--;
 		return v;
 	}
 	
@@ -411,7 +277,6 @@ class PriorityQueue {
 	public void decreaseKey(int v, double key) {
 		queue[v].key = key;
 		while((v > 1) && (queue[(int) (v / 2)].key > queue[v].key)) {
-			System.out.println("Swapping "+(int) (v / 2)+"  with  "+v);
 			PQVert temp = queue[(int) (v / 2)];
 			queue[(int) (v / 2)] = queue[v];
 			queue[v] = temp;
@@ -451,11 +316,9 @@ class PriorityQueue {
 		boolean notFixed = true;
 		
 		while(notFixed) {
-			System.out.println("parent: "+parent+" left: "+left+" right: "+right);
-			System.out.print("     parent: "+queue[parent].key);
-			System.out.print("     left: "+queue[left].key);
-			System.out.println("     right: "+queue[right].key);
 			notFixed = false;
+			if((left <= queue.length) && (right <= queue.length)) {
+				
 			if(queue[left] == null) {
 				return; //the bottom of the priority queue has been reached;
 			}else if((queue[right] == null) && (queue[left] != null)){
@@ -483,6 +346,7 @@ class PriorityQueue {
 					queue[right] = temp;
 					parent = right;
 				}
+			}
 			}
 			
 			left = parent * 2;
