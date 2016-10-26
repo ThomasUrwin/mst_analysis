@@ -14,44 +14,53 @@ public class mst {
 	}
 	
 	private static void runMSTTest(int n) {
-		double krusAve = 0;
-		double krusL = 0;
-		double primAve = 0;
-		double primL= 0;
+		double krusAveTime = 0;
+		double krusAveL = 0;
+		double primAveTime = 0;
+		double primAveL= 0;
 		double[][][] graphs = new double[20][n][n];
 		
 		//generate all 20 graphs, stored into an array
 		for (int i = 0; i < 20; i++) {
 			graphs[i] = initGraph(n);
 		}
-		System.out.println("Starting tests for n = "+n);
+
 		for (int i = 0; i < 20; i++) {
-			double[] krusVals;
-			double[] primVals;
 			long startTime = 0;
 			long endTime = 0;
 			
 			//run Kruskal's and Prim's algorithms on the graph, returning average weight L(n) and time to complete
-			krusVals = kruskal(graphs[i]);
 			startTime = System.currentTimeMillis();
-			primVals = prim(graphs[i]);
+			krusAveL += kruskal(graphs[i]);
+			
+			/*if(n == 1000) {
+				System.out.println("KrusAveSum: "+krusAveL);
+			}*/
+			
 			endTime = System.currentTimeMillis();
 			
-			krusAve += krusVals[0];
-			krusL += krusVals[1];
-			primAve += (endTime - startTime);
-			primL += primVals[1];
+			krusAveTime += (endTime - startTime);
 			
-			System.out.println("Iteration done... "+n+": "+i);
+			startTime = System.currentTimeMillis();
+			//primAveL += prim(graphs[i]);
+			
+			/*if(n == 1000) {
+				System.out.println("PrimAveSum: "+primAveL);
+			}*/
+			
+			endTime = System.currentTimeMillis();
+			
+			primAveTime += (endTime - startTime);
+//			primL += primVals[1];
 		}
 		
 		//Calculate averages
-		krusAve = krusAve / 20;
-		krusL = krusL / 20;
-		primAve = primAve / 20;
-		primL = primL / 20;
+		krusAveTime = krusAveTime / 20;
+		krusAveL = krusAveL / 20;
+		//primAveTime = primAveTime / 20;
+		//primAveL = primAveL / 20;
 		
-		System.out.println("n = " + String.valueOf(n) + " --> KrusAve: " + krusAve + ", KrusL: " + krusL + ", PrimAve: " + primAve + ", PrimL: " + primL);
+		System.out.println("n = " + String.valueOf(n) + " --> Kruskal Ave Time: " + krusAveTime + ", Kruskal Ave L(n): " + krusAveL + "   |||   Prim Ave Time: " + primAveTime + ", Prim Ave L(n): " + primAveL);
 	}
 	
 	//generates a complete symmetric graph, randomly weighted between 0 and 1
@@ -82,21 +91,18 @@ public class mst {
 	
 	
 	//KRUSKAL'S ALGORITHM
-	private static double[] kruskal(double[][] g) {
+	private static double kruskal(double[][] g) {
 		int n = g[0].length;
 		double[][] mst = new double[n][n];
-		List<DisjointSet> forest = new ArrayList<DisjointSet>();
+		DisjointSet[] forest = new DisjointSet[n];
 		int numEdges = (int) ((Math.pow(n,2)) - n)/2;
 		Edge[] edges = new Edge[numEdges];
-		double time = 0;
-		double krusL = 0;
-		
-		long startTime = System.currentTimeMillis();
+		double krusAveL = 0;
 		
 		//create DisjointSet for each vertex
 		for (int i = 0; i < n; i++) {
 			DisjointSet t = new DisjointSet(i);
-			forest.add(t);
+			forest[i] = t;
 		}
 		
 		//create array of edges
@@ -116,114 +122,172 @@ public class mst {
 			DisjointSet treeSrc = null;
 			DisjointSet treeDest = null;
 			
-			for(DisjointSet t : forest) {
-				if(t.has(edges[i].src)) {
-					treeSrc = t;
+			/*for(DisjointSet t : forest) {
+				if(t.value == edges[i].src) {
+					treeSrc = findSet(t);
 				}
-				if(t.has(edges[i].dest)) {
-					treeDest = t;
+				if(t.value == edges[i].dest) {
+					treeDest = findSet(t);
 				}
 				
 				if((treeSrc != null) && (treeDest != null)) {
-					if(treeSrc.getRep() != treeDest.getRep()) {
+					if(treeSrc != treeDest) {
 						//add edge to MST
 						mst[edges[i].src][edges[i].dest] = edges[i].weight;
 						mst[edges[i].dest][edges[i].src] = edges[i].weight;
 						
-						krusL += edges[i].weight;
+						krusAveL += edges[i].weight;
 						
 						//union sets
-						treeSrc = unionDisjSet(treeSrc, treeDest);
-						forest.remove(treeDest);
+						union(treeSrc, treeDest);
+						//forest.remove(treeDest);
 						break;
 					}else break;
 				}
+			}*/
+			treeSrc = findSet(forest[edges[i].src]);
+			treeDest = findSet(forest[edges[i].dest]);
+			
+			if((treeSrc != null) && (treeDest != null)) {
+				if(treeSrc != treeDest) {
+					//add edge to MST
+					mst[edges[i].src][edges[i].dest] = edges[i].weight;
+					mst[edges[i].dest][edges[i].src] = edges[i].weight;
+					
+					krusAveL += edges[i].weight;
+					
+					/*if(n == 1000) {
+						System.out.println("Edge weight "+ i + ": " + edges[i].weight);
+					}*/
+					
+					//union sets
+					union(treeSrc, treeDest);
+					//forest.remove(treeDest);
+				}
 			}
 		}
-		long endTime = System.currentTimeMillis();
+		//long endTime = System.currentTimeMillis();
 
-		time = endTime - startTime;
-		krusL = krusL / (n-1); //n-1 == number of edges in MST
-		
-		double[] returnVals = new double[2];
-		returnVals[0] = time;
-		returnVals[1] = krusL;
-		return returnVals;
+		//krusAveL = krusAveL / (n-1); //n-1 == number of edges in MST
+
+		return krusAveL;
 	}
 	
 	
-	//PRIM'S ALGORITHM
-	private static double[] prim(double[][] g) {
+//	//PRIM'S ALGORITHM
+//	private static double prim(double[][] g) {
+//		int n = g[0].length;
+//		double[][] mst = new double[n][n];
+//		//DisjointSet tree = null;
+//		int[] tree = new int[n];
+//		int numEdges = (int) ((Math.pow(n,2)) - n)/2;
+//		Edge[] edges = new Edge[numEdges];
+//		PriorityQueue q = new PriorityQueue(numEdges);
+//		double time = 0;
+//		double primSumL = 0;
+//		
+//		//create array of edges
+//		/*int nextEdge = 0;
+//		for (int i = 0; i < n; i++) {
+//			for (int j = 0; j < i; j++) {
+//				edges[nextEdge] = new Edge(g[i][j], i, j);
+//				nextEdge++;
+//			}
+//		}*/
+//		
+//		//select random vertice to start at
+//		int randVertice = (int) (Math.random() * (n-1));
+//		//tree = new DisjointSet(randVertice);
+//		tree[randVertice]++; //mark this node as added to our MST
+//		//initialise priority queue with edges connected to the randomly selected starting vertice
+//		/*for(int i = 0; i < numEdges; i++) {
+//			if((randVertice == edges[i].src) || (randVertice == edges[i].dest)) {
+//				q.insert(edges[i]);
+//			}
+//		}*/
+//		for(int j = 0; j < n; j++) {
+//			if(tree[j] == 0) {
+//				Edge connectedEdge = new Edge(g[randVertice][j], randVertice, j);
+//				q.insert(connectedEdge);
+//			}
+//		}
+//		
+//		while(!q.isEmpty()) {
+//			Edge e = q.extractMin();
+//			int vertice = -1;
+//			if((tree[e.src] == 1) && !(tree[e.dest] == 1)) {
+//				vertice = e.dest;
+//			}else if((tree[e.dest] == 1) && !(tree[e.src] == 1)){
+//				vertice = e.src;
+//			}
+//			if(vertice != -1) {
+//				primSumL += e.weight;
+//				
+//				if(n == 1000) {
+//					System.out.println("Prim edge: "+e.weight);
+//				}
+//				
+//				tree[vertice]++; //mark this vertice as added to our MST
+//				/*for(int i = 0; i < numEdges; i++) {
+//					if((vertice == edges[i].src) && !(tree.has(edges[i].dest))) {
+//						q.insert(edges[i]);
+//					}else if((vertice == edges[i].dest) && !(tree.has(edges[i].src))) {
+//						q.insert(edges[i]);
+//					}
+//				}*/
+//				for(int j = 0; j < n; j++) {
+//					if(tree[j] == 0) {
+//						Edge connectedEdge = new Edge(g[randVertice][j], randVertice, j);
+//						q.insert(connectedEdge);
+//					}
+//				}
+//			}
+//		}
+//		
+//		//primAveL = primAveL / (n-1); //n-1 == number of edges in MST
+//		/*System.out.print("Nodes in Prim MST: ");
+//		for(int i = 0; i < n; i++) {
+//			System.out.print(tree[i]+", ");
+//		}*/
+//		return primSumL;
+//	}
+	
+	private static double prim(double[][] g) {
 		int n = g[0].length;
 		double[][] mst = new double[n][n];
-		DisjointSet tree = null;
-		int numEdges = (int) ((Math.pow(n,2)) - n)/2;
-		Edge[] edges = new Edge[numEdges];
-		PriorityQueue q = new PriorityQueue(numEdges);
-		double time = 0;
-		double primL = 0;
+		PriorityQueue q = new PriorityQueue(n);
+		int[] tree = new int[n];
+		double primSumL = 0;
 		
-		//create array of edges
-		int nextEdge = 0;
-		for (int i = 0; i < n; i++) {
-			for (int j = 0; j < i; j++) {
-				edges[nextEdge] = new Edge(g[i][j], i, j);
-				nextEdge++;
-			}
+		for(int i = 0; i < n; i++) {
+			PQVert v = new PQVert(i);
+			q.insert(v);
 		}
 		
-		//select random vertice to start at
 		int randVertice = (int) (Math.random() * (n-1));
-		tree = new DisjointSet(randVertice);
-		//initialise priority queue with edges connected to the randomly selected starting vertice
-		for(int i = 0; i < numEdges; i++) {
-			if((randVertice == edges[i].src) || (randVertice == edges[i].dest)) {
-				q.enqueue(edges[i]);
-			}
-		}
-		
+		System.out.println("Rand: "+randVertice);
+		//q.queue[randVertice+1].key = 0;
+		System.out.println("Vert: "+randVertice+", pos: "+q.get(randVertice)+" key: "+q.queue[q.get(randVertice)].key);
+		q.decreaseKey(q.get(randVertice), 0);
+		System.out.println("Vert: "+randVertice+", pos: "+q.get(randVertice)+" key: "+q.queue[q.get(randVertice)].key);
 		while(!q.isEmpty()) {
-			Edge e = q.dequeue();
-			int vertice = -1;
-			if((tree.has(e.src)) && !(tree.has(e.dest))) {
-				vertice = e.dest;
-			}else if((tree.has(e.dest)) && !(tree.has(e.src))){
-				vertice = e.src;
-			}
-			if(vertice != -1) {
-				primL += e.weight;
-				tree.include(vertice);
-				for(int i = 0; i < numEdges; i++) {
-					if((vertice == edges[i].src) && !(tree.has(edges[i].dest))) {
-						q.enqueue(edges[i]);
-					}else if((vertice == edges[i].dest) && !(tree.has(edges[i].src))) {
-						q.enqueue(edges[i]);
+			PQVert v = q.extractMin();
+			tree[v.id] = 1;
+			
+			//add edge to mst
+			primSumL += v.key;
+			
+			for(int j = 0; j < n; j++) {
+				if((tree[j] != 1) && (g[v.id][j] != 0)) {
+					int vert = q.get(j);
+					if(g[v.id][j] < q.queue[vert].key) {
+						q.queue[vert].pi = v;
+						q.decreaseKey(vert, g[v.id][j]);
 					}
 				}
 			}
 		}
-		
-		primL = primL / (n-1); //n-1 == number of edges in MST
-		
-		double[] returnVals = new double[2];
-		returnVals[0] = time;
-		returnVals[1] = primL;
-		return returnVals;
-	}
-	
-	private static DisjointSet unionDisjSet(DisjointSet t1, DisjointSet t2) {
-		DisjointSet newSet;
-		DisjointSet childSet;
-		if (t1.size >= t2.size) {
-			newSet = t1;
-			childSet = t2;
-		}else {
-			newSet = t2;
-			childSet = t1;
-		}	
-		newSet.include(childSet);
-		
-		return newSet;
+		return primSumL;
 	}
 	
 	private static Edge[] quickSort(Edge[] edges, int low, int high) {
@@ -255,109 +319,192 @@ public class mst {
 		
 		return edges;
 	}
+	
+	/* Directed Forest of DisjointSet Operations
+	 * ----------------------------------------
+	 -------------------------------------------*/
+	public static void union(DisjointSet tree1, DisjointSet tree2) {
+		if(tree1.rank > tree2.rank) {
+			link(tree2, tree1);
+		}else if(tree2.rank > tree1.rank) {
+			link(tree1, tree2);
+		}else {
+			tree1.rank++;
+			link(tree2, tree1);
+		}
+	}
+	
+	public static DisjointSet findSet(DisjointSet v) {
+		while(v.parent != v) {
+			v = v.parent;
+		}
+		return v;
+	}
+	
+	public static void link(DisjointSet tree1, DisjointSet tree2) {
+		tree1.parent = tree2;
+	}
+	/*--------------------------------------------*/
 }
 
+//Priority queue vertice
+class PQVert {
+	int id;
+	PQVert pi;
+	double key;
+	
+	public PQVert(int v) {
+		id = v;
+		pi = null;
+		key = Double.MAX_VALUE;
+	}
+}
+
+/*Priority Queue */
 class PriorityQueue {
-	
-}
-/*class PriorityQueue {
-	Edge[] queue;
-	int front;
-	int rear;
-	
-	public PriorityQueue(int n) {
-		queue = new Edge[n];
-		front = 0;
-		rear = 0;
-	}
-	
-	private void reorder() {
-		Edge e = queue[rear];
-		for(int i = front; i < rear; i++) {
-			if(queue[i].weight > e.weight) {
-				if((front > 0) && (i == front)) {
-					queue[front-1] = e;
-					queue[rear] = null;
-					front--;
-					rear--;
-				}else {
-					for(int j = rear-1; j >= i; j--) {
-						if(j != -1) {
-							queue[j+1] = queue[j];
-						}else {
-							break;//there is only 1 edge in the queue, no reordering is needed
-						}
-						
-					}
-					queue[i] = e;
-				}
-				break;
-			}
-		}
-	}
-	
-	public void enqueue(Edge e) {
-		if(queue[rear] != null) {
-			queue[rear+1] = e;
-		}else {
-			queue[rear] = e;
-		}
-		if(queue[rear+1] != null) rear++;
-		reorder();
-	}
-	
-	public Edge dequeue() {
-		Edge e = queue[front];
-		queue[front] = null;
-		if(front < rear) front++;
-		return e;
-	}
-	
-	public boolean isEmpty() {
-		if((front == rear) && (queue[front] == null)) {
-			return true;
-		}else {
-			return false;
-		}
-	}
-}*/
-
-class DisjointSet {
-	int rep;
-	Set<Integer> vertices;
+	PQVert[] queue;
 	int size;
 	
 	//constructor
-	public DisjointSet(int v) {
-		vertices = new HashSet<Integer>();
-		rep = v;
-		vertices.add(v);
-		size = 1;
+	public PriorityQueue(int n) {
+		queue = new PQVert[n+1];
+		size = 0;
 	}
 	
-	//checks if a given vertice is in the set
-	public boolean has(int v) {
-		return vertices.contains(v);
+	//returns the index of a node with a given 'id' value
+	public int get(int v) {
+		for(int i = 1; i <= size; i++) {
+			if(queue[i].id == v) {
+				return i;
+			}
+		}
+		System.out.println("Can't find "+v);
+		return -1;
 	}
 	
-	//adds a new vertices to the set
-	public void include(int v) {
-		vertices.add(v);
-		size += 1;
+	//inserts a single node into the queue
+	public void insert(PQVert v) {
+		queue[size + 1] = v;
+		size++;
+		fixQueueInsert();
 	}
 	
-	public void include(DisjointSet t) {
-		for (int v : t.vertices) {
-			this.include(v);
+	//extracts node with the minimum key in the queue (in index 1)
+	public PQVert extractMin() {
+		System.out.println("Extracted "+queue[1].id);
+		PQVert v = queue[1];
+		queue[1] = queue[size];
+		
+		queue[size] = null;
+		
+		fixQueueExtract();
+		//size--;
+		System.out.print("Queue after fix: ");
+		for(int i = 1; i < size; i++) {
+			System.out.print(queue[i].id+", ");
+		}
+		System.out.println("");
+		return v;
+	}
+	
+	//decreases the key of a given vertice in the priority queue, and swaps nodes in the queue to maintain the fundamental properties of the min-heap priority queue
+	public void decreaseKey(int v, double key) {
+		queue[v].key = key;
+		while((v > 1) && (queue[(int) (v / 2)].key > queue[v].key)) {
+			System.out.println("Swapping "+(int) (v / 2)+"  with  "+v);
+			PQVert temp = queue[(int) (v / 2)];
+			queue[(int) (v / 2)] = queue[v];
+			queue[v] = temp;
+			v = (int) (v / 2);
 		}
 	}
 	
-	//returns the representative of the set
-	public int getRep() {
-		return rep;
+	//returns true if the queue is empty
+	public boolean isEmpty() {
+		return (size == 0);
+	}
+	
+	//adjusts queue to maintain properties after an insert operation
+	private void fixQueueInsert() {
+		int newVertIndex = size;
+		PQVert v = queue[newVertIndex];
+		
+		if (newVertIndex == 1) return;
+		
+		int parent = (int) (newVertIndex / 2);
+		while (queue[parent].key > v.key) {
+			PQVert temp = queue[parent];
+			queue[parent] = v;
+			queue[newVertIndex] = temp;
+			
+			newVertIndex = parent;
+			parent = (int) (newVertIndex / 2);
+			if(newVertIndex == 1) return;
+		}
+	}
+	
+	//adjusts queue to maintain properties after an extract operation
+	private void fixQueueExtract() {
+		int parent = 1;
+		int left = parent * 2;
+		int right = (parent * 2) + 1;
+		boolean notFixed = true;
+		
+		while(notFixed) {
+			System.out.println("parent: "+parent+" left: "+left+" right: "+right);
+			System.out.print("     parent: "+queue[parent].key);
+			System.out.print("     left: "+queue[left].key);
+			System.out.println("     right: "+queue[right].key);
+			notFixed = false;
+			if(queue[left] == null) {
+				return; //the bottom of the priority queue has been reached;
+			}else if((queue[right] == null) && (queue[left] != null)){
+				if(queue[parent].key > queue[left].key) {
+					PQVert temp = queue[parent];
+					queue[parent] = queue[left];
+					queue[left] = temp;
+					parent = left;
+					return; //the bottom of the priority queue has been reached
+				}
+			}else if(queue[left].key <= queue[right].key) {
+				
+				if(queue[parent].key > queue[left].key) {
+					notFixed = true;
+					PQVert temp = queue[parent];
+					queue[parent] = queue[left];
+					queue[left] = temp;
+					parent = left;
+				}
+			}else {
+				if(queue[parent].key > queue[right].key) {
+					notFixed = true;
+					PQVert temp = queue[parent];
+					queue[parent] = queue[right];
+					queue[right] = temp;
+					parent = right;
+				}
+			}
+			
+			left = parent * 2;
+			right = (parent * 2) + 1;
+		}
 	}
 }
 
+//Disjoint Set
+class DisjointSet {
+	DisjointSet parent;
+	int rank;
+	int value;
+	
+	public DisjointSet(int v) {
+		parent = this;
+		value = v;
+		rank = 0;
+	}
+}
+
+//Edge
 class Edge {
 	double weight;
 	int src;
@@ -370,72 +517,3 @@ class Edge {
 		dest = d;
 	}
 }
-
-
-//public class mst {
-//
-//	public static void main(String[] args) {
-//		System.out.println("Running test...");
-//		test();
-//	}
-//	
-//	private static void test() {
-//		Vertice v1 = new Vertice(1);
-//		Vertice v2 = new Vertice(2);
-//		System.out.println("V1 id: " + v1.id);
-//		System.out.println("V2 id: " + v2.id);
-//		
-//		Edge e = new Edge((float)0.5, v1, v2);
-//		
-//		System.out.println("E weight: " + e.weight + ", E source: " + e.src.id + ", E destination: " + e.dest.id);
-//	}
-//	
-//}
-//
-//class Vertice {
-//	int id;
-//	
-//	//constructor
-//	public Vertice(int i) {
-//		id = i;
-//	}
-//}
-//
-//class Edge {
-//	float weight;
-//	Vertice src;
-//	Vertice dest;
-//	
-//	//constructor
-//	public Edge(float w, Vertice s, Vertice d) {
-//		weight = w;
-//		src = s;
-//		dest = d;
-//	}
-//}
-//
-//class Graph {
-//	List<Vertice> v;
-//	List<Edge> e;
-//	
-//	public Graph() {
-//		v = new ArrayList<Vertice>();
-//		e = new ArrayList<Edge>();
-//	}
-//	
-//	public void addV(Vertice vert) {
-//		v.add(vert);
-//	}
-//	
-//	public void removeV(int id) {
-//		
-//	}
-//	
-//	public void addE(Edge edge) {
-//		e.add(edge);
-//	}
-//	
-//	public void removeE(Edge edge) {
-//		
-//	}
-//}
